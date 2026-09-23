@@ -99,9 +99,21 @@ export function BillsPage() {
                   <td>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                       {!bill.is_paid && (
-                        <Button label="Pagar" size="sm" variant="secondary" onClick={() => payMutation.mutate(bill.id)} />
+                        <Button
+                          label="Pagar"
+                          size="sm"
+                          variant="secondary"
+                          tooltip="Marca este recibo como pagado"
+                          onClick={() => payMutation.mutate(bill.id)}
+                        />
                       )}
-                      <Button label="Eliminar" size="sm" variant="danger" onClick={() => deleteMutation.mutate(bill.id)} />
+                      <Button
+                        label="Eliminar"
+                        size="sm"
+                        variant="danger"
+                        tooltip="Elimina este recibo permanentemente"
+                        onClick={() => deleteMutation.mutate(bill.id)}
+                      />
                     </div>
                   </td>
                 </tr>

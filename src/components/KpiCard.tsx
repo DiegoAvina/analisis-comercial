@@ -15,13 +15,20 @@ interface Props {
   value: string;
   tone?: Tone;
   onClick?: () => void;
+  /** Explica a dónde lleva la tarjeta al hacer clic. */
+  tooltip?: string;
 }
 
-export function KpiCard({ icon, label, value, tone = 'primary', onClick }: Props) {
+export function KpiCard({ icon, label, value, tone = 'primary', onClick, tooltip }: Props) {
   const t = TONE_COLORS[tone];
 
   return (
-    <button className="kpi-card" onClick={onClick} disabled={!onClick}>
+    <button
+      className={`kpi-card${onClick ? ' tooltip' : ''}`}
+      onClick={onClick}
+      disabled={!onClick}
+      data-tooltip={onClick ? (tooltip ?? `Ver detalle de ${label.toLowerCase()}`) : undefined}
+    >
       <div className="kpi-icon" style={{ background: t.bg, color: t.fg }}>
         {icon}
       </div>

@@ -78,7 +78,13 @@ export function SavingGoalsPage() {
                 </div>
               )}
 
-              <Button label="Aportar / gestionar" variant="secondary" size="sm" onClick={() => setActiveGoal(goal)} />
+              <Button
+                label="Aportar / gestionar"
+                variant="secondary"
+                size="sm"
+                tooltip="Registra un aporte o invita a más personas a esta meta"
+                onClick={() => setActiveGoal(goal)}
+              />
             </Card>
           ))}
         </div>

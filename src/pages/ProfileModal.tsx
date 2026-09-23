@@ -86,7 +86,12 @@ export function ProfileModal({ open, onClose }: { open: boolean; onClose: () => 
       {!!error && <ErrorBanner message={error} />}
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 20 }}>
-        <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => fileInputRef.current?.click()}>
+        <div
+          className="tooltip"
+          data-tooltip="Cambiar tu foto de perfil"
+          style={{ position: 'relative', cursor: 'pointer' }}
+          onClick={() => fileInputRef.current?.click()}
+        >
           <Avatar name={user.name} url={user.avatar_url} size={84} />
           <div
             style={{
@@ -158,7 +163,7 @@ export function ProfileModal({ open, onClose }: { open: boolean; onClose: () => 
       />
 
       <div style={{ height: 12 }} />
-      <Button label="Cerrar sesión" variant="secondary" onClick={logout} />
+      <Button label="Cerrar sesión" variant="secondary" tooltip="Salir de tu cuenta en este dispositivo" onClick={logout} />
 
       <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
         <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--danger)', marginBottom: 8 }}>Zona peligrosa</div>
@@ -173,12 +178,18 @@ export function ProfileModal({ open, onClose }: { open: boolean; onClose: () => 
             <Button
               label="Borrar mis datos"
               variant="secondary"
+              tooltip="Borra recibos, gastos, metas, tandas e ingresos, pero conserva tu cuenta"
               onClick={() => {
                 setResetDone(false);
                 setConfirmingAction('reset');
               }}
             />
-            <Button label="Eliminar mi cuenta" variant="danger" onClick={() => setConfirmingAction('delete')} />
+            <Button
+              label="Eliminar mi cuenta"
+              variant="danger"
+              tooltip="Elimina tu cuenta y toda tu información para siempre"
+              onClick={() => setConfirmingAction('delete')}
+            />
           </div>
         )}
 

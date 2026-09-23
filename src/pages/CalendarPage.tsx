@@ -87,9 +87,23 @@ export function CalendarPage() {
           <div className="page-subtitle">Recibos, tandas y metas del mes</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Button label="←" variant="secondary" size="sm" onClick={() => setMonthAnchor((d) => addMonths(d, -1))} />
+          <Button
+            label="←"
+            variant="secondary"
+            size="sm"
+            icon
+            tooltip="Mes anterior"
+            onClick={() => setMonthAnchor((d) => addMonths(d, -1))}
+          />
           <span style={{ fontWeight: 600, minWidth: 130, textAlign: 'center', textTransform: 'capitalize' }}>{monthLabel(monthAnchor)}</span>
-          <Button label="→" variant="secondary" size="sm" onClick={() => setMonthAnchor((d) => addMonths(d, 1))} />
+          <Button
+            label="→"
+            variant="secondary"
+            size="sm"
+            icon
+            tooltip="Mes siguiente"
+            onClick={() => setMonthAnchor((d) => addMonths(d, 1))}
+          />
         </div>
       </div>
 
@@ -115,26 +129,28 @@ export function CalendarPage() {
                 const spend = expenseByDate.get(dateString) ?? 0;
                 const isToday = dateString === todayString;
                 const isSelected = dateString === selectedDate;
+                const dayTooltip = dayEvents.length > 0
+                  ? `${dayEvents.length} evento${dayEvents.length > 1 ? 's' : ''} el día ${date.getDate()}`
+                  : `Ver el día ${date.getDate()}`;
                 return (
                   <button
                     key={i}
+                    className="calendar-day tooltip"
+                    data-tooltip={dayTooltip}
                     onClick={() => setSelectedDate(dateString)}
                     style={{
-                      textAlign: 'left',
-                      padding: 8,
-                      minHeight: 64,
-                      borderRadius: 10,
                       border: isSelected ? '2px solid var(--primary)' : isToday ? '2px solid var(--info)' : '1px solid var(--border)',
-                      background: 'var(--surface)',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
                     }}
                   >
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{date.getDate()}</div>
                     {dayEvents.length > 0 && (
                       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 4 }}>
                         {dayEvents.slice(0, 3).map((ev, idx) => (
-                          <span key={idx} style={{ width: 6, height: 6, borderRadius: 3, background: `var(--${sourceTone(ev.source) === 'neutral' ? 'text-muted' : sourceTone(ev.source)})` }} />
+                          <span
+                            key={idx}
+                            className="calendar-day-dot"
+                            style={{ background: `var(--${sourceTone(ev.source) === 'neutral' ? 'text-muted' : sourceTone(ev.source)})` }}
+                          />
                         ))}
                       </div>
                     )}
@@ -158,7 +174,7 @@ export function CalendarPage() {
             ) : (
               <Card style={{ padding: 0 }}>
                 {selectedEvents.map((ev, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: idx === 0 ? 'none' : '1px solid var(--border)' }}>
+                  <div key={idx} className="list-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: idx === 0 ? 'none' : '1px solid var(--border)' }}>
                     <div>
                       <div style={{ fontWeight: 600 }}>{ev.title}</div>
                       <Badge label={SOURCE_LABELS[ev.source]} tone={sourceTone(ev.source)} />

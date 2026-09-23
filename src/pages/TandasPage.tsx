@@ -76,7 +76,13 @@ export function TandasPage() {
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>Próximo pago: {tanda.next_payment_date}</div>
               )}
 
-              <Button label="Gestionar" variant="secondary" size="sm" onClick={() => setActiveTanda(tanda)} />
+              <Button
+                label="Gestionar"
+                variant="secondary"
+                size="sm"
+                tooltip="Registra pagos o invita integrantes a esta tanda"
+                onClick={() => setActiveTanda(tanda)}
+              />
             </Card>
           ))}
         </div>
@@ -188,7 +194,7 @@ function TandaDetailModal({ tanda, onClose, onChanged }: { tanda: Tanda; onClose
           <div className="section-title">Integrantes</div>
           <Card style={{ marginBottom: 16 }}>
             {tanda.members.map((m) => (
-              <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+              <div key={m.id} className="list-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid var(--border)' }}>
                 <span>{m.name}</span>
                 <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
                   Turno {m.pivot?.turn_order} {m.pivot?.has_received ? '· recibió' : ''}

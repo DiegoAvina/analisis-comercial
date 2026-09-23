@@ -76,9 +76,19 @@ export function DashboardPage() {
 
       {data && (
         <>
-          <Card style={{ background: 'var(--primary)', color: '#fff', marginBottom: 20 }}>
+          <Card
+            style={{
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+              color: '#fff',
+              marginBottom: 20,
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
             <div style={{ opacity: 0.85, fontSize: 14 }}>Disponible esta semana</div>
-            <div style={{ fontSize: 34, fontWeight: 700, margin: '4px 0 16px' }}>{money(data.income.available_this_week)}</div>
+            <div style={{ fontSize: 34, fontWeight: 700, margin: '4px 0 16px', fontVariantNumeric: 'tabular-nums' }}>
+              {money(data.income.available_this_week)}
+            </div>
             <div style={{ display: 'flex', gap: 32, fontSize: 13, opacity: 0.9 }}>
               <span>Sueldo: {money(data.income.weekly_income)}</span>
               <span>Gastado: {money(data.income.spent_this_week)}</span>
@@ -86,21 +96,37 @@ export function DashboardPage() {
           </Card>
 
           <div className="kpi-grid">
-            <KpiCard icon="💰" label="Ahorro total" value={money(data.savings.total)} tone="primary" onClick={() => navigate('/ahorros')} />
+            <KpiCard
+              icon="💰"
+              label="Ahorro total"
+              value={money(data.savings.total)}
+              tone="primary"
+              onClick={() => navigate('/ahorros')}
+              tooltip="Ir a tus metas de ahorro"
+            />
             <KpiCard
               icon="🧾"
               label="Recibos pendientes"
               value={String(data.bills.pending_count)}
               tone={data.bills.pending_count > 0 ? 'warning' : 'success'}
               onClick={() => navigate('/recibos')}
+              tooltip="Ir a tus recibos pendientes"
             />
-            <KpiCard icon="👥" label="Tandas activas" value={String(data.tandas.active_count)} tone="primary" onClick={() => navigate('/tandas')} />
+            <KpiCard
+              icon="👥"
+              label="Tandas activas"
+              value={String(data.tandas.active_count)}
+              tone="primary"
+              onClick={() => navigate('/tandas')}
+              tooltip="Ir a tus tandas"
+            />
             <KpiCard
               icon="⏳"
               label="Ingresos pendientes"
               value={money(data.incomes.pending_this_month)}
               tone="warning"
               onClick={() => navigate('/ingresos')}
+              tooltip="Ir a tus ingresos de este mes"
             />
           </div>
 
@@ -150,7 +176,7 @@ export function DashboardPage() {
                   <EmptyState icon="🎯" title="Aún no tienes metas de ahorro" />
                 ) : (
                   data.goals.map((goal) => (
-                    <div key={goal.id} style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
+                    <div key={goal.id} className="list-row" style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                         <span style={{ fontWeight: 600 }}>{goal.name}</span>
                         {goal.status === 'completed' ? (
@@ -177,7 +203,10 @@ export function DashboardPage() {
 
 function Row({ title, subtitle, amount }: { title: string; subtitle: string; amount: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--border)' }}>
+    <div
+      className="list-row"
+      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--border)' }}
+    >
       <div>
         <div style={{ fontWeight: 600 }}>{title}</div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{subtitle}</div>

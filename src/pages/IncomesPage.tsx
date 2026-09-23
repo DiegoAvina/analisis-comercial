@@ -115,6 +115,7 @@ export function IncomesPage() {
               {sourcesQuery.data.map((source: IncomeSource) => (
                 <div
                   key={source.id}
+                  className="list-row"
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid var(--border)' }}
                 >
                   <div>
@@ -124,7 +125,13 @@ export function IncomesPage() {
                       {source.default_amount ? ` · ${money(source.default_amount)}` : ''}
                     </div>
                   </div>
-                  <Button label="Eliminar" size="sm" variant="danger" onClick={() => deleteSourceMutation.mutate(source.id)} />
+                  <Button
+                    label="Eliminar"
+                    size="sm"
+                    variant="danger"
+                    tooltip="Elimina esta fuente de ingreso y sus ocurrencias futuras"
+                    onClick={() => deleteSourceMutation.mutate(source.id)}
+                  />
                 </div>
               ))}
             </Card>
@@ -154,7 +161,7 @@ export function IncomesPage() {
           ) : (
             <Card style={{ padding: 0 }}>
               {occurrencesQuery.data.map((occ: IncomeOccurrence) => (
-                <div key={occ.id} style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+                <div key={occ.id} className="list-row" style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <div>
                       <div style={{ fontWeight: 600 }}>{occ.source?.name ?? 'Ingreso'}</div>
@@ -166,9 +173,26 @@ export function IncomesPage() {
                     <span style={{ fontWeight: 600 }}>{money(occ.expected_amount)}</span>
                     {occ.status === 'expected' && (
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <Button label="Recibido" size="sm" onClick={() => receiveMutation.mutate(occ.id)} />
-                        <Button label="No llegó" size="sm" variant="secondary" onClick={() => missMutation.mutate(occ.id)} />
-                        <Button label="Cancelar" size="sm" variant="danger" onClick={() => cancelMutation.mutate(occ.id)} />
+                        <Button
+                          label="Recibido"
+                          size="sm"
+                          tooltip="Marca este ingreso como recibido"
+                          onClick={() => receiveMutation.mutate(occ.id)}
+                        />
+                        <Button
+                          label="No llegó"
+                          size="sm"
+                          variant="secondary"
+                          tooltip="Marca que este ingreso no llegó en la fecha esperada"
+                          onClick={() => missMutation.mutate(occ.id)}
+                        />
+                        <Button
+                          label="Cancelar"
+                          size="sm"
+                          variant="danger"
+                          tooltip="Cancela este ingreso esperado"
+                          onClick={() => cancelMutation.mutate(occ.id)}
+                        />
                       </div>
                     )}
                   </div>
