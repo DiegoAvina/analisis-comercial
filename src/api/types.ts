@@ -39,6 +39,17 @@ export interface SavingGoalParticipant extends User {
   };
 }
 
+export interface SavingGoalMovement {
+  id: number;
+  saving_goal_id: number;
+  user_id: number;
+  date: string;
+  amount: number;
+  type: 'deposit' | 'withdraw' | 'auto_from_weekly';
+  description: string | null;
+  created_at: string;
+}
+
 export interface SavingGoal {
   id: number;
   user_id: number;
@@ -48,6 +59,7 @@ export interface SavingGoal {
   current_amount: number;
   deadline: string | null;
   category: string | null;
+  image_url: string | null;
   is_group: boolean;
   status: 'active' | 'completed';
   progress_percent: number;

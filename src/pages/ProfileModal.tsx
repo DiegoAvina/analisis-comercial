@@ -8,11 +8,13 @@ import { Avatar } from '../components/Avatar';
 import { updateProfile, uploadAvatar, resetAccountData } from '../api/profile';
 import { getApiErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 type DangerAction = 'reset' | 'delete' | null;
 
 export function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user, updateUser, logout, deleteAccount } = useAuth();
+  const { accent, palettes, setAccentKey } = useTheme();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -130,6 +132,43 @@ export function ProfileModal({ open, onClose }: { open: boolean; onClose: () => 
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)', marginTop: 8 }}>
           {avatarMutation.isPending ? 'Subiendo...' : 'Cambiar foto'}
         </span>
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }}>
+          Color de la app
+        </label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {palettes.map((p) => {
+            const selected = p.key === accent.key;
+            return (
+              <button
+                key={p.key}
+                type="button"
+                className="tooltip"
+                data-tooltip={p.label}
+                onClick={() => setAccentKey(p.key)}
+                aria-label={p.label}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  background: p.primary,
+                  border: selected ? '3px solid var(--text)' : '3px solid transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: 14,
+                  transition: 'transform 0.15s var(--ease-spring)',
+                }}
+              >
+                {selected ? '✓' : ''}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <Input label="Nombre" value={name} onChange={(e) => setName(e.target.value)} />

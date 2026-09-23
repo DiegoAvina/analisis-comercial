@@ -15,7 +15,17 @@ import { fetchDashboard } from '../api/dashboard';
 import { fetchExpenses } from '../api/expenses';
 import { fetchMonthlySummary } from '../api/reports';
 import { getApiErrorMessage } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { money } from '../utils/format';
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Buenos días';
+  if (hour < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+const TODAY_LABEL = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
 const TYPE_LABELS: Record<string, string> = {
   food: 'Comida',
@@ -29,6 +39,8 @@ const TYPE_LABELS: Record<string, string> = {
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const firstName = (user?.name ?? '').trim().split(/\s+/)[0] ?? '';
 
   const dashboardQuery = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
   const expensesQuery = useQuery({ queryKey: ['expenses', 'month'], queryFn: () => fetchExpenses('month') });
@@ -65,8 +77,10 @@ export function DashboardPage() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Inicio</div>
-          <div className="page-subtitle">Tu resumen financiero</div>
+          <div className="page-title">
+            {greeting()}{firstName ? `, ${firstName}` : ''} 👋
+          </div>
+          <div className="page-subtitle" style={{ textTransform: 'capitalize' }}>{TODAY_LABEL}</div>
         </div>
       </div>
 
@@ -85,13 +99,74 @@ export function DashboardPage() {
               overflow: 'hidden',
             }}
           >
-            <div style={{ opacity: 0.85, fontSize: 14 }}>Disponible esta semana</div>
-            <div style={{ fontSize: 34, fontWeight: 700, margin: '4px 0 16px', fontVariantNumeric: 'tabular-nums' }}>
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: -60,
+                right: -60,
+                width: 200,
+                height: 200,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)',
+              }}
+            />
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                bottom: -70,
+                right: 60,
+                width: 140,
+                height: 140,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.08)',
+              }}
+            />
+
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ opacity: 0.85, fontSize: 14, fontWeight: 600 }}>Disponible esta semana</div>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 'var(--radius-full)',
+                  background: 'rgba(255,255,255,0.16)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                }}
+              >
+                💸
+              </div>
+            </div>
+            <div style={{ position: 'relative', fontSize: 38, fontWeight: 700, margin: '4px 0 20px', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
               {money(data.income.available_this_week)}
             </div>
-            <div style={{ display: 'flex', gap: 32, fontSize: 13, opacity: 0.9 }}>
-              <span>Sueldo: {money(data.income.weekly_income)}</span>
-              <span>Gastado: {money(data.income.spent_this_week)}</span>
+            <div style={{ position: 'relative', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  background: 'rgba(255,255,255,0.14)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '6px 14px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                Sueldo: {money(data.income.weekly_income)}
+              </span>
+              <span
+                style={{
+                  background: 'rgba(255,255,255,0.14)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '6px 14px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                Gastado: {money(data.income.spent_this_week)}
+              </span>
             </div>
           </Card>
 

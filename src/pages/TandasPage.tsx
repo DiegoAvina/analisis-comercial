@@ -4,6 +4,7 @@ import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { Select } from '../components/Select';
 import { AmountInput } from '../components/AmountInput';
 import { Modal } from '../components/Modal';
 import { ProgressBar } from '../components/ProgressBar';
@@ -136,14 +137,11 @@ function TandaFormModal({ open, onClose }: { open: boolean; onClose: () => void 
         value={numMembers}
         onChange={(e) => setNumMembers(e.target.value)}
       />
-      <div className="field">
-        <label>Frecuencia</label>
-        <select className="input" value={frequency} onChange={(e) => setFrequency(e.target.value as Tanda['frequency'])}>
-          <option value="weekly">Semanal</option>
-          <option value="biweekly">Quincenal</option>
-          <option value="monthly">Mensual</option>
-        </select>
-      </div>
+      <Select label="Frecuencia" value={frequency} onChange={(e) => setFrequency(e.target.value as Tanda['frequency'])}>
+        <option value="weekly">Semanal</option>
+        <option value="biweekly">Quincenal</option>
+        <option value="monthly">Mensual</option>
+      </Select>
       <Input label="Fecha de inicio" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
       <div style={{ height: 8 }} />
       <Button

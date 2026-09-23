@@ -4,6 +4,7 @@ import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { Select } from '../components/Select';
 import { AmountInput } from '../components/AmountInput';
 import { Modal } from '../components/Modal';
 import { LoadingView } from '../components/LoadingView';
@@ -19,9 +20,16 @@ import {
   receiveIncomeOccurrence,
 } from '../api/incomes';
 import { getApiErrorMessage } from '../api/client';
-import { parseAmount } from '../utils/amount';
+import { isValidAmount, parseAmount } from '../utils/amount';
 import { money } from '../utils/format';
-import type { IncomeOccurrence, IncomeOccurrenceStatus, IncomeSource, IncomeType } from '../api/types';
+import type { IncomeFrequency, IncomeOccurrence, IncomeOccurrenceStatus, IncomeSource, IncomeType } from '../api/types';
+
+const FREQUENCY_LABELS: Record<Exclude<IncomeFrequency, 'irregular'>, string> = {
+  weekly: 'Semanal',
+  biweekly: 'Quincenal',
+  monthly: 'Mensual',
+  yearly: 'Anual',
+};
 
 const TYPE_LABELS: Record<IncomeType, string> = {
   salary: 'Sueldo',
@@ -212,40 +220,96 @@ function IncomeSourceFormModal({ open, onClose }: { open: boolean; onClose: () =
   const [name, setName] = useState('');
   const [type, setType] = useState<IncomeType>('salary');
   const [defaultAmount, setDefaultAmount] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [isRecurring, setIsRecurring] = useState(true);
+  const [frequency, setFrequency] = useState<Exclude<IncomeFrequency, 'irregular'>>('biweekly');
+  const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const hasAmount = isValidAmount(defaultAmount, 0.01);
 
   const mutation = useMutation({
     mutationFn: () =>
       createIncomeSource({
         name: name.trim(),
         type,
-        default_amount: defaultAmount ? parseAmount(defaultAmount) : undefined,
+        default_amount: hasAmount ? parseAmount(defaultAmount) : undefined,
+        start_date: startDate.trim() || undefined,
+        is_recurring: isRecurring,
+        frequency: isRecurring ? frequency : undefined,
+        notes: notes.trim() || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['income-sources'] });
+      queryClient.invalidateQueries({ queryKey: ['income-occurrences'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setName('');
       setDefaultAmount('');
+      setStartDate('');
+      setNotes('');
       onClose();
     },
     onError: (e) => setError(getApiErrorMessage(e, 'No se pudo crear la fuente de ingreso.')),
   });
 
   return (
-    <Modal open={open} title="Nueva fuente de ingreso" onClose={onClose}>
+    <Modal open={open} title="Nueva fuente de ingreso" onClose={onClose} maxWidth={620}>
       {!!error && <ErrorBanner message={error} />}
-      <Input label="Nombre" value={name} onChange={(e) => setName(e.target.value)} placeholder="Sueldo, freelance..." />
-      <div className="field">
-        <label>Tipo</label>
-        <select className="input" value={type} onChange={(e) => setType(e.target.value as IncomeType)}>
+
+      <div className="form-row">
+        <Input label="Nombre" value={name} onChange={(e) => setName(e.target.value)} placeholder="Sueldo, freelance..." />
+        <Select label="Tipo" value={type} onChange={(e) => setType(e.target.value as IncomeType)}>
           {Object.entries(TYPE_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
-      <AmountInput label="Monto habitual (opcional)" value={defaultAmount} onChange={setDefaultAmount} />
+
+      <div className="form-row">
+        <AmountInput label="Monto habitual (opcional si es variable)" value={defaultAmount} onChange={setDefaultAmount} />
+        <Input
+          label="Fecha esperada (opcional)"
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+      </div>
+
+      <div className="field">
+        <label>¿Se repite?</label>
+        <div className="chip-row" style={{ marginBottom: 0 }}>
+          <button type="button" className={`chip${isRecurring ? ' active' : ''}`} onClick={() => setIsRecurring(true)}>
+            Sí, es recurrente
+          </button>
+          <button type="button" className={`chip${!isRecurring ? ' active' : ''}`} onClick={() => setIsRecurring(false)}>
+            No, es único
+          </button>
+        </div>
+      </div>
+
+      {isRecurring && (
+        <div className="field">
+          <label>Frecuencia</label>
+          <div className="chip-row" style={{ marginBottom: 0 }}>
+            {Object.entries(FREQUENCY_LABELS).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={`chip${frequency === value ? ' active' : ''}`}
+                onClick={() => setFrequency(value as Exclude<IncomeFrequency, 'irregular'>)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Input label="Notas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+
       <div style={{ height: 8 }} />
       <Button
         label="Crear fuente"

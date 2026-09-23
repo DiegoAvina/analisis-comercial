@@ -20,6 +20,7 @@ export function AmountInput({ label = 'Monto', value, onChange, placeholder = '0
       error={error}
       autoFocus={autoFocus}
       inputMode="decimal"
+      icon="$"
     />
   );
 }
