@@ -44,6 +44,18 @@ const TYPE_LABELS: Record<IncomeType, string> = {
   other: 'Otro',
 };
 
+const TYPE_EMBLEMS: Record<IncomeType, string> = {
+  salary: '💼',
+  freelance: '💻',
+  business: '🏪',
+  sale: '🏷️',
+  investment: '📈',
+  bonus: '🎁',
+  gift: '🎀',
+  refund: '↩️',
+  other: '💰',
+};
+
 const STATUS_LABELS: Record<IncomeOccurrenceStatus, string> = {
   expected: 'Esperado',
   received: 'Recibido',
@@ -121,41 +133,72 @@ export function IncomesPage() {
               <EmptyState icon="💼" title="Aún no tienes fuentes de ingreso" />
             </Card>
           ) : (
-            <Card style={{ padding: 0 }}>
-              {sourcesQuery.data.map((source: IncomeSource) => (
-                <div
-                  key={source.id}
-                  className="list-row clickable-row"
-                  role="link"
-                  tabIndex={0}
-                  aria-label={`Abrir la fuente ${source.name}`}
-                  onClick={() => navigate(`/ingresos/fuentes/${source.id}`)}
-                  onKeyDown={(e) => {
-                    if (e.target === e.currentTarget && e.key === 'Enter') navigate(`/ingresos/fuentes/${source.id}`);
-                  }}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid var(--border)' }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 600 }}>
-                      {source.name} <span className="row-arrow" aria-hidden="true">→</span>
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {TYPE_LABELS[source.type]}
-                      {source.default_amount ? ` · ${money(source.default_amount)}` : ''}
-                    </div>
+            <div className="source-list">
+              {sourcesQuery.data.map((source: IncomeSource, i) => {
+                const deleting = deleteSourceMutation.isPending && deleteSourceMutation.variables === source.id;
+                return (
+                  <div
+                    key={source.id}
+                    className={`source-card${source.active ? '' : ' is-inactive'}`}
+                    style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+                  >
+                    <button
+                      type="button"
+                      className="source-card-main"
+                      aria-label={`Abrir la fuente ${source.name}`}
+                      onClick={() => navigate(`/ingresos/fuentes/${source.id}`)}
+                    >
+                      <span className="source-card-emblem" aria-hidden="true">
+                        {TYPE_EMBLEMS[source.type] ?? '💰'}
+                      </span>
+
+                      <span className="source-card-info">
+                        <span className="source-card-name">{source.name}</span>
+                        <span className="source-card-tags">
+                          <span className="source-tag">{TYPE_LABELS[source.type]}</span>
+                          {source.is_recurring && source.frequency && source.frequency !== 'irregular' && (
+                            <span className="source-tag">🔁 {FREQUENCY_LABELS[source.frequency]}</span>
+                          )}
+                          {!!source.rules?.length && (
+                            <span className="source-tag is-accent">
+                              🔀 {source.rules.length} regla{source.rules.length === 1 ? '' : 's'}
+                            </span>
+                          )}
+                          {!source.active && <span className="source-tag is-danger">Inactiva</span>}
+                        </span>
+                      </span>
+
+                      {!!source.default_amount && (
+                        <span className="source-card-amount">
+                          {money(source.default_amount)}
+                          <span>habitual</span>
+                        </span>
+                      )}
+
+                      <span className="source-card-cta" aria-hidden="true">
+                        <span className="source-card-cta-label">Ver detalle</span>
+                        <span className="source-card-chevron">›</span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="source-card-delete tooltip"
+                      data-tooltip="Eliminar fuente"
+                      aria-label={`Eliminar la fuente ${source.name}`}
+                      disabled={deleteSourceMutation.isPending}
+                      onClick={() => {
+                        if (window.confirm(`¿Eliminar "${source.name}" y sus ingresos futuros?`)) {
+                          deleteSourceMutation.mutate(source.id);
+                        }
+                      }}
+                    >
+                      {deleting ? <span className="btn-spinner" aria-hidden="true" /> : '🗑️'}
+                    </button>
                   </div>
-                  <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                    <Button
-                      label="Eliminar"
-                      size="sm"
-                      variant="danger"
-                      tooltip="Elimina esta fuente de ingreso y sus ocurrencias futuras"
-                      onClick={() => deleteSourceMutation.mutate(source.id)}
-                    />
-                  </span>
-                </div>
-              ))}
-            </Card>
+                );
+              })}
+            </div>
           )}
         </div>
 

@@ -10,6 +10,7 @@ import { LoadingView } from '../components/LoadingView';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { EmptyState } from '../components/EmptyState';
 import { NeonProgressBar } from '../components/NeonProgressBar';
+import { DistributionRulesPanel } from '../components/DistributionRulesPanel';
 import { DetailBreadcrumb, DetailHero, DetailNotice, SegmentedTabs, type TabDef } from '../components/detail/DetailParts';
 import {
   cancelIncomeOccurrence,
@@ -26,11 +27,12 @@ import { isValidAmount, parseAmount } from '../utils/amount';
 import { dayLabel, money, toDateInputString } from '../utils/format';
 import type { IncomeFrequency, IncomeOccurrence, IncomeOccurrenceStatus, IncomeType } from '../api/types';
 
-type Tab = 'pending' | 'register';
+type Tab = 'pending' | 'register' | 'rules';
 
 const TABS: TabDef<Tab>[] = [
   { key: 'pending', label: 'Por cobrar', icon: '⏳' },
   { key: 'register', label: 'Registrar', icon: '➕' },
+  { key: 'rules', label: 'Reglas', icon: '🔀' },
 ];
 
 const TYPE_EMBLEMS: Record<IncomeType, string> = {
@@ -330,6 +332,8 @@ export function IncomeSourceDetailPage() {
                   })}
                 </div>
               )
+            ) : tab === 'rules' ? (
+              <DistributionRulesPanel source={source} onChanged={showNotice} />
             ) : (
               <form onSubmit={submitRegister}>
                 <AmountInput label="Monto" value={amountText} onChange={setAmount} autoFocus />
