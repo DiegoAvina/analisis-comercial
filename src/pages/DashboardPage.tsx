@@ -1,13 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
-import { ProgressBar } from '../components/ProgressBar';
+import { NeonProgressBar } from '../components/NeonProgressBar';
 import { LoadingView } from '../components/LoadingView';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { EmptyState } from '../components/EmptyState';
 import { KpiCard } from '../components/KpiCard';
+import { Button } from '../components/Button';
+import { ExpenseFormModal } from '../components/ExpenseFormModal';
 import { CategoryBreakdown } from '../charts/CategoryBreakdown';
 import { DailySpendTrend } from '../charts/DailySpendTrend';
 import { MonthlyTrend } from '../charts/MonthlyTrend';
@@ -16,7 +18,7 @@ import { fetchExpenses } from '../api/expenses';
 import { fetchMonthlySummary } from '../api/reports';
 import { getApiErrorMessage } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { money } from '../utils/format';
+import { dayLabel, money } from '../utils/format';
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -40,6 +42,7 @@ const TYPE_LABELS: Record<string, string> = {
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [expenseFormOpen, setExpenseFormOpen] = useState(false);
   const firstName = (user?.name ?? '').trim().split(/\s+/)[0] ?? '';
 
   const dashboardQuery = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
@@ -82,6 +85,7 @@ export function DashboardPage() {
           </div>
           <div className="page-subtitle" style={{ textTransform: 'capitalize' }}>{TODAY_LABEL}</div>
         </div>
+        <Button label="+ Agregar gasto" onClick={() => setExpenseFormOpen(true)} />
       </div>
 
       {dashboardQuery.isError && (
@@ -226,7 +230,12 @@ export function DashboardPage() {
               <div className="section-title">Próximo ingreso</div>
               <Card>
                 {data.incomes.next_income ? (
-                  <Row title={data.incomes.next_income.source?.name ?? 'Ingreso'} subtitle={data.incomes.next_income.expected_date} amount={money(data.incomes.next_income.expected_amount)} />
+                  <Row
+                    title={data.incomes.next_income.source?.name ?? 'Ingreso'}
+                    subtitle={dayLabel(data.incomes.next_income.expected_date)}
+                    amount={money(data.incomes.next_income.expected_amount)}
+                    onClick={() => navigate(`/ingresos/fuentes/${data.incomes.next_income!.income_source_id}`)}
+                  />
                 ) : (
                   <EmptyState icon="💰" title="Sin ingresos esperados próximamente" />
                 )}
@@ -238,7 +247,13 @@ export function DashboardPage() {
                   <EmptyState icon="✅" title="No tienes recibos pendientes" />
                 ) : (
                   data.bills.next.map((bill) => (
-                    <Row key={bill.id} title={bill.name} subtitle={bill.due_date ?? ''} amount={money(bill.amount)} />
+                    <Row
+                      key={bill.id}
+                      title={bill.name}
+                      subtitle={bill.due_date ? dayLabel(bill.due_date) : ''}
+                      amount={money(bill.amount)}
+                      onClick={() => navigate(`/recibos/${bill.id}`)}
+                    />
                   ))
                 )}
               </Card>
@@ -251,17 +266,34 @@ export function DashboardPage() {
                   <EmptyState icon="🎯" title="Aún no tienes metas de ahorro" />
                 ) : (
                   data.goals.map((goal) => (
-                    <div key={goal.id} className="list-row" style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontWeight: 600 }}>{goal.name}</span>
+                    <div
+                      key={goal.id}
+                      className="list-row clickable-row"
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Abrir la meta ${goal.name}`}
+                      onClick={() => navigate(`/ahorros/${goal.id}`)}
+                      onKeyDown={(e) => e.key === 'Enter' && navigate(`/ahorros/${goal.id}`)}
+                      style={{ padding: '10px 0', borderTop: '1px solid var(--border)' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ fontWeight: 600 }}>
+                          {goal.name} <span className="row-arrow" aria-hidden="true">→</span>
+                        </span>
                         {goal.status === 'completed' ? (
                           <Badge label="Completada" tone="success" />
                         ) : (
                           <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{Math.round(goal.progress_percent)}%</span>
                         )}
                       </div>
-                      <ProgressBar percent={goal.progress_percent} color={goal.status === 'completed' ? 'var(--success)' : 'var(--primary)'} />
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                      <NeonProgressBar
+                        percent={goal.progress_percent}
+                        tone={goal.status === 'completed' ? 'success' : 'primary'}
+                        size="sm"
+                        surface="light"
+                        label={`Avance de ${goal.name}`}
+                      />
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
                         {money(goal.current_amount)} de {money(goal.target_amount)}
                       </div>
                     </div>
@@ -272,19 +304,27 @@ export function DashboardPage() {
           </div>
         </>
       )}
+
+      <ExpenseFormModal open={expenseFormOpen} onClose={() => setExpenseFormOpen(false)} />
     </div>
   );
 }
 
-function Row({ title, subtitle, amount }: { title: string; subtitle: string; amount: string }) {
+function Row({ title, subtitle, amount, onClick }: { title: string; subtitle: string; amount: string; onClick?: () => void }) {
   return (
     <div
-      className="list-row"
+      className={`list-row${onClick ? ' clickable-row' : ''}`}
+      role={onClick ? 'link' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => onClick && e.key === 'Enter' && onClick()}
       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--border)' }}
     >
       <div>
-        <div style={{ fontWeight: 600 }}>{title}</div>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{subtitle}</div>
+        <div style={{ fontWeight: 600 }}>
+          {title} {onClick && <span className="row-arrow" aria-hidden="true">→</span>}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{subtitle}</div>
       </div>
       <div style={{ fontWeight: 600 }}>{amount}</div>
     </div>

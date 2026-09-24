@@ -13,6 +13,10 @@ export function fetchIncomeSources() {
   return api.get<IncomeSource[]>('/income-sources').then((r) => r.data);
 }
 
+export function fetchIncomeSource(id: number) {
+  return api.get<IncomeSource>(`/income-sources/${id}`).then((r) => r.data);
+}
+
 export interface IncomeSourceInput {
   name: string;
   type: IncomeType;

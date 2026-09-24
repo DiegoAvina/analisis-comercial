@@ -7,6 +7,10 @@ export function fetchBills(status: BillFilter = 'pending') {
   return api.get<Bill[]>('/bills', { params: { status } }).then((r) => r.data);
 }
 
+export function fetchBill(id: number) {
+  return api.get<Bill>(`/bills/${id}`).then((r) => r.data);
+}
+
 export interface BillInput {
   name: string;
   provider?: string;

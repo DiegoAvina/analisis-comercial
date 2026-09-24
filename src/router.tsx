@@ -8,6 +8,10 @@ import { DashboardPage } from './pages/DashboardPage';
 import { IncomesPage } from './pages/IncomesPage';
 import { BillsPage } from './pages/BillsPage';
 import { SavingGoalsPage } from './pages/SavingGoalsPage';
+import { SavingGoalDetailPage } from './pages/SavingGoalDetailPage';
+import { TandaDetailPage } from './pages/TandaDetailPage';
+import { BillDetailPage } from './pages/BillDetailPage';
+import { IncomeSourceDetailPage } from './pages/IncomeSourceDetailPage';
 import { TandasPage } from './pages/TandasPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { useAuth } from './context/AuthContext';
@@ -39,9 +43,13 @@ export function AppRouter() {
       <Route element={<ProtectedRoutes />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/ingresos" element={<IncomesPage />} />
+        <Route path="/ingresos/fuentes/:sourceId" element={<IncomeSourceDetailPage />} />
         <Route path="/recibos" element={<BillsPage />} />
+        <Route path="/recibos/:billId" element={<BillDetailPage />} />
         <Route path="/ahorros" element={<SavingGoalsPage />} />
+        <Route path="/ahorros/:goalId" element={<SavingGoalDetailPage />} />
         <Route path="/tandas" element={<TandasPage />} />
+        <Route path="/tandas/:tandaId" element={<TandaDetailPage />} />
         <Route path="/calendario" element={<CalendarPage />} />
       </Route>
 

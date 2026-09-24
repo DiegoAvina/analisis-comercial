@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -12,7 +13,7 @@ import { EmptyState } from '../components/EmptyState';
 import { type BillFilter, createBill, deleteBill, fetchBills, markBillPaid } from '../api/bills';
 import { getApiErrorMessage } from '../api/client';
 import { isValidAmount, parseAmount } from '../utils/amount';
-import { money } from '../utils/format';
+import { dayLabel, money } from '../utils/format';
 import type { Bill } from '../api/types';
 
 const FILTERS: { value: BillFilter; label: string }[] = [
@@ -30,6 +31,7 @@ function badgeTone(bill: Bill): 'success' | 'danger' | 'warning' | 'neutral' {
 }
 
 export function BillsPage() {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<BillFilter>('pending');
   const [formOpen, setFormOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -88,16 +90,31 @@ export function BillsPage() {
             </thead>
             <tbody>
               {data.map((bill) => (
-                <tr key={bill.id}>
-                  <td style={{ fontWeight: 600 }}>{bill.name}</td>
+                <tr
+                  key={bill.id}
+                  className="clickable-row"
+                  tabIndex={0}
+                  aria-label={`Abrir el recibo ${bill.name}`}
+                  onClick={() => navigate(`/recibos/${bill.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && e.key === 'Enter') navigate(`/recibos/${bill.id}`);
+                  }}
+                >
+                  <td style={{ fontWeight: 600 }}>
+                    {bill.name} <span className="row-arrow" aria-hidden="true">→</span>
+                  </td>
                   <td style={{ color: 'var(--text-muted)' }}>{bill.provider ?? '—'}</td>
-                  <td>{bill.due_date}</td>
+                  <td style={{ textTransform: 'capitalize' }}>{bill.due_date ? dayLabel(bill.due_date) : '—'}</td>
                   <td>
                     <Badge label={bill.status_text ?? bill.status} tone={badgeTone(bill)} />
                   </td>
                   <td style={{ fontWeight: 600 }}>{money(bill.amount)}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                    <div
+                      style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       {!bill.is_paid && (
                         <Button
                           label="Pagar"

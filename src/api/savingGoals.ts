@@ -19,6 +19,18 @@ export function createSavingGoal(data: SavingGoalInput) {
   return api.post<SavingGoal>('/saving-goals', data).then((r) => r.data);
 }
 
+export type SavingGoalUpdate = Partial<Pick<SavingGoalInput, 'name' | 'description' | 'target_amount' | 'category' | 'is_group'>> & {
+  deadline?: string | null;
+};
+
+export function updateSavingGoal(id: number, data: SavingGoalUpdate) {
+  return api.put<{ ok: boolean; goal: SavingGoal }>(`/saving-goals/${id}`, data).then((r) => r.data);
+}
+
+export function deleteSavingGoal(id: number) {
+  return api.delete(`/saving-goals/${id}`);
+}
+
 export function contributeSavingGoal(id: number, amount: number, description?: string) {
   return api
     .post<{ ok: boolean; goal: SavingGoal }>(`/saving-goals/${id}/contribute`, { amount, description })

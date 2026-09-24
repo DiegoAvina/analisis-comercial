@@ -8,6 +8,9 @@ interface Props {
   completed?: boolean;
   onChangePhoto: (file: File) => void;
   uploading?: boolean;
+  /** Si se pasan, aparecen botones de editar/eliminar junto a la cámara. */
+  onEdit?: () => void;
+  onDelete?: () => void;
   /** 'hero' = portada grande (detalle de la meta). 'card' = portada de tarjeta en la lista. */
   variant?: 'hero' | 'card';
 }
@@ -17,7 +20,17 @@ interface Props {
  * degradado de respaldo si aún no elige una), con el avance hacia el
  * objetivo superpuesto encima.
  */
-export function GoalCoverImage({ imageUrl, name, percent, completed, onChangePhoto, uploading, variant = 'card' }: Props) {
+export function GoalCoverImage({
+  imageUrl,
+  name,
+  percent,
+  completed,
+  onChangePhoto,
+  uploading,
+  onEdit,
+  onDelete,
+  variant = 'card',
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isHero = variant === 'hero';
   const clamped = Math.max(0, Math.min(100, percent));
@@ -42,18 +55,34 @@ export function GoalCoverImage({ imageUrl, name, percent, completed, onChangePho
         </div>
       )}
 
-      <button
-        type="button"
-        className="goal-cover-camera tooltip"
-        data-tooltip="Cambiar la foto de esta meta"
-        disabled={uploading}
-        onClick={(e) => {
-          e.stopPropagation();
-          inputRef.current?.click();
-        }}
-      >
-        {uploading ? <span className="btn-spinner" aria-hidden="true" /> : '📷'}
-      </button>
+      <div className="goal-cover-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        {onEdit && (
+          <button type="button" className="goal-cover-camera tooltip" data-tooltip="Editar esta meta" aria-label="Editar meta" onClick={onEdit}>
+            ✏️
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            className="goal-cover-camera goal-cover-danger tooltip"
+            data-tooltip="Eliminar esta meta"
+            aria-label="Eliminar meta"
+            onClick={onDelete}
+          >
+            🗑️
+          </button>
+        )}
+        <button
+          type="button"
+          className="goal-cover-camera tooltip"
+          data-tooltip="Cambiar la foto de esta meta"
+          aria-label="Cambiar foto"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? <span className="btn-spinner" aria-hidden="true" /> : '📷'}
+        </button>
+      </div>
       <input
         ref={inputRef}
         type="file"

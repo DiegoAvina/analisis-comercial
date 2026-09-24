@@ -8,7 +8,7 @@ export function money(value: number | string | null | undefined): string {
 }
 
 export function parseISODate(value: string): Date {
-  const [y, m, d] = value.split('-').map(Number);
+  const [y, m, d] = value.slice(0, 10).split('-').map(Number);
   return new Date(y, (m ?? 1) - 1, d ?? 1);
 }
 

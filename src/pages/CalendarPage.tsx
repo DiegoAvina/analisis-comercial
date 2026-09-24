@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -34,7 +35,14 @@ function sourceTone(source: CalendarEvent['source']): 'info' | 'warning' | 'succ
   }
 }
 
+const EVENT_ROUTES: Partial<Record<CalendarEvent['source'], string>> = {
+  bill: '/recibos',
+  tanda: '/tandas',
+  saving_goal: '/ahorros',
+};
+
 export function CalendarPage() {
+  const navigate = useNavigate();
   const [monthAnchor, setMonthAnchor] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
@@ -173,15 +181,29 @@ export function CalendarPage() {
               </Card>
             ) : (
               <Card style={{ padding: 0 }}>
-                {selectedEvents.map((ev, idx) => (
-                  <div key={idx} className="list-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: idx === 0 ? 'none' : '1px solid var(--border)' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{ev.title}</div>
-                      <Badge label={SOURCE_LABELS[ev.source]} tone={sourceTone(ev.source)} />
+                {selectedEvents.map((ev, idx) => {
+                  const base = EVENT_ROUTES[ev.source];
+                  const to = base && ev.source_id ? `${base}/${ev.source_id}` : null;
+                  return (
+                    <div
+                      key={idx}
+                      className={`list-row${to ? ' clickable-row' : ''}`}
+                      role={to ? 'link' : undefined}
+                      tabIndex={to ? 0 : undefined}
+                      onClick={to ? () => navigate(to) : undefined}
+                      onKeyDown={(e) => to && e.key === 'Enter' && navigate(to)}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: idx === 0 ? 'none' : '1px solid var(--border)' }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 600 }}>
+                          {ev.title} {to && <span className="row-arrow" aria-hidden="true">→</span>}
+                        </div>
+                        <Badge label={SOURCE_LABELS[ev.source]} tone={sourceTone(ev.source)} />
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{money(ev.amount)}</span>
                     </div>
-                    <span style={{ fontWeight: 600 }}>{money(ev.amount)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </Card>
             )}
           </div>

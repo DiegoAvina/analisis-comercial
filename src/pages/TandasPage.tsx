@@ -7,14 +7,15 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { AmountInput } from '../components/AmountInput';
 import { Modal } from '../components/Modal';
-import { ProgressBar } from '../components/ProgressBar';
+import { NeonProgressBar } from '../components/NeonProgressBar';
+import { CardCta, LinkCard } from '../components/detail/DetailParts';
 import { LoadingView } from '../components/LoadingView';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { EmptyState } from '../components/EmptyState';
-import { addTandaMember, createTanda, fetchTandas, registerTandaPayment } from '../api/tandas';
+import { createTanda, fetchTandas } from '../api/tandas';
 import { getApiErrorMessage } from '../api/client';
 import { isValidAmount, parseAmount } from '../utils/amount';
-import { money } from '../utils/format';
+import { dayLabel, money } from '../utils/format';
 import type { Tanda } from '../api/types';
 
 const FREQUENCY_LABELS: Record<Tanda['frequency'], string> = {
@@ -25,15 +26,8 @@ const FREQUENCY_LABELS: Record<Tanda['frequency'], string> = {
 
 export function TandasPage() {
   const [formOpen, setFormOpen] = useState(false);
-  const [activeTanda, setActiveTanda] = useState<Tanda | null>(null);
-  const queryClient = useQueryClient();
 
   const { data, isLoading, isError, error } = useQuery({ queryKey: ['tandas'], queryFn: fetchTandas });
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['tandas'] });
-    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-  };
 
   return (
     <div>
@@ -55,42 +49,45 @@ export function TandasPage() {
         </Card>
       ) : (
         <div className="kpi-grid">
-          {data.map((tanda) => (
-            <Card key={tanda.id}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 16 }}>{tanda.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{FREQUENCY_LABELS[tanda.frequency]} · {tanda.num_members} integrantes</div>
+          {data.map((tanda, i) => (
+            <LinkCard key={tanda.id} to={`/tandas/${tanda.id}`} label={`Abrir la tanda ${tanda.name}`} index={i}>
+              <Card className="goal-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 16 }}>{tanda.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{FREQUENCY_LABELS[tanda.frequency]} · {tanda.num_members} integrantes</div>
+                  </div>
+                  <Badge
+                    label={tanda.status === 'active' ? 'Activa' : tanda.status === 'completed' ? 'Completada' : 'Cancelada'}
+                    tone={tanda.status === 'active' ? 'info' : tanda.status === 'completed' ? 'success' : 'danger'}
+                  />
                 </div>
-                <Badge
-                  label={tanda.status === 'active' ? 'Activa' : tanda.status === 'completed' ? 'Completada' : 'Cancelada'}
-                  tone={tanda.status === 'active' ? 'info' : tanda.status === 'completed' ? 'success' : 'danger'}
+
+                <NeonProgressBar
+                  percent={tanda.progress_percent}
+                  tone={tanda.status === 'completed' ? 'success' : tanda.status === 'cancelled' ? 'danger' : 'primary'}
+                  size="sm"
+                  surface="light"
+                  label="Rondas completadas"
                 />
-              </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-muted)', margin: '8px 0' }}>
+                  <span>Ronda {Math.min(tanda.current_round, tanda.num_members)} de {tanda.num_members}</span>
+                  <span>{money(tanda.contribution_amount)} / aportación</span>
+                </div>
+                {tanda.next_payment_date && (
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14, textTransform: 'capitalize' }}>
+                    Próximo pago: {dayLabel(tanda.next_payment_date)}
+                  </div>
+                )}
 
-              <ProgressBar percent={tanda.progress_percent} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-muted)', margin: '6px 0 8px' }}>
-                <span>Ronda {tanda.current_round} de {tanda.num_members}</span>
-                <span>{money(tanda.contribution_amount)} / aportación</span>
-              </div>
-              {tanda.next_payment_date && (
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>Próximo pago: {tanda.next_payment_date}</div>
-              )}
-
-              <Button
-                label="Gestionar"
-                variant="secondary"
-                size="sm"
-                tooltip="Registra pagos o invita integrantes a esta tanda"
-                onClick={() => setActiveTanda(tanda)}
-              />
-            </Card>
+                <CardCta label="Pagos y turnos" />
+              </Card>
+            </LinkCard>
           ))}
         </div>
       )}
 
       <TandaFormModal open={formOpen} onClose={() => setFormOpen(false)} />
-      {activeTanda && <TandaDetailModal tanda={activeTanda} onClose={() => setActiveTanda(null)} onChanged={invalidate} />}
     </div>
   );
 }
@@ -152,81 +149,6 @@ function TandaFormModal({ open, onClose }: { open: boolean; onClose: () => void 
         }}
         loading={mutation.isPending}
         disabled={!name || !isValidAmount(amount) || !numMembers || !startDate}
-      />
-    </Modal>
-  );
-}
-
-function TandaDetailModal({ tanda, onClose, onChanged }: { tanda: Tanda; onClose: () => void; onChanged: () => void }) {
-  const [memberEmail, setMemberEmail] = useState('');
-  const [turnOrder, setTurnOrder] = useState('');
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const memberMutation = useMutation({
-    mutationFn: () => addTandaMember(tanda.id, memberEmail.trim(), Number(turnOrder)),
-    onSuccess: () => {
-      onChanged();
-      setMemberEmail('');
-      setTurnOrder('');
-    },
-    onError: (e) => setError(getApiErrorMessage(e, 'No se pudo agregar al integrante.')),
-  });
-
-  const paymentMutation = useMutation({
-    mutationFn: () => registerTandaPayment(tanda.id, parseAmount(paymentAmount)),
-    onSuccess: () => {
-      onChanged();
-      setPaymentAmount('');
-      onClose();
-    },
-    onError: (e) => setError(getApiErrorMessage(e, 'No se pudo registrar el pago.')),
-  });
-
-  return (
-    <Modal open title={tanda.name} onClose={onClose}>
-      {!!error && <ErrorBanner message={error} />}
-
-      {tanda.members && tanda.members.length > 0 && (
-        <>
-          <div className="section-title">Integrantes</div>
-          <Card style={{ marginBottom: 16 }}>
-            {tanda.members.map((m) => (
-              <div key={m.id} className="list-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: '1px solid var(--border)' }}>
-                <span>{m.name}</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                  Turno {m.pivot?.turn_order} {m.pivot?.has_received ? '· recibió' : ''}
-                </span>
-              </div>
-            ))}
-          </Card>
-        </>
-      )}
-
-      <div className="section-title">Registrar pago</div>
-      <AmountInput value={paymentAmount} onChange={setPaymentAmount} />
-      <Button
-        label="Registrar pago"
-        onClick={() => {
-          setError(null);
-          paymentMutation.mutate();
-        }}
-        loading={paymentMutation.isPending}
-        disabled={!isValidAmount(paymentAmount)}
-      />
-
-      <div className="section-title" style={{ marginTop: 20 }}>Agregar integrante</div>
-      <Input label="Correo" type="email" value={memberEmail} onChange={(e) => setMemberEmail(e.target.value)} placeholder="correo@ejemplo.com" />
-      <Input label="Turno" type="number" min={1} value={turnOrder} onChange={(e) => setTurnOrder(e.target.value)} />
-      <Button
-        label="Invitar"
-        variant="secondary"
-        onClick={() => {
-          setError(null);
-          memberMutation.mutate();
-        }}
-        loading={memberMutation.isPending}
-        disabled={!memberEmail || !turnOrder}
       />
     </Modal>
   );

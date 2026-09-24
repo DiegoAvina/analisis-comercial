@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -75,6 +76,7 @@ const STATUS_FILTERS: { value: IncomeOccurrenceStatus | 'all'; label: string }[]
 ];
 
 export function IncomesPage() {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<IncomeOccurrenceStatus | 'all'>('expected');
   const [sourceFormOpen, setSourceFormOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -123,23 +125,34 @@ export function IncomesPage() {
               {sourcesQuery.data.map((source: IncomeSource) => (
                 <div
                   key={source.id}
-                  className="list-row"
+                  className="list-row clickable-row"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Abrir la fuente ${source.name}`}
+                  onClick={() => navigate(`/ingresos/fuentes/${source.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && e.key === 'Enter') navigate(`/ingresos/fuentes/${source.id}`);
+                  }}
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid var(--border)' }}
                 >
                   <div>
-                    <div style={{ fontWeight: 600 }}>{source.name}</div>
+                    <div style={{ fontWeight: 600 }}>
+                      {source.name} <span className="row-arrow" aria-hidden="true">→</span>
+                    </div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                       {TYPE_LABELS[source.type]}
                       {source.default_amount ? ` · ${money(source.default_amount)}` : ''}
                     </div>
                   </div>
-                  <Button
-                    label="Eliminar"
-                    size="sm"
-                    variant="danger"
-                    tooltip="Elimina esta fuente de ingreso y sus ocurrencias futuras"
-                    onClick={() => deleteSourceMutation.mutate(source.id)}
-                  />
+                  <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <Button
+                      label="Eliminar"
+                      size="sm"
+                      variant="danger"
+                      tooltip="Elimina esta fuente de ingreso y sus ocurrencias futuras"
+                      onClick={() => deleteSourceMutation.mutate(source.id)}
+                    />
+                  </span>
                 </div>
               ))}
             </Card>
